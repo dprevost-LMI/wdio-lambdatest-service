@@ -193,6 +193,40 @@ test('after in multiremote', () => {
              })
 })
 
+describe('_isMultiremote', () => {
+    it.each([
+        [{ isMultiremote: true }, true],
+        [{ isMultiremote: false }, false],
+        [{ isMultiRemote: true }, true],
+        [{ isMultiRemote: false }, false],
+        [{}, false],
+    ])('returns correct value for browser %o', (browserProps, expected) => {
+        const service = new LambdaTestService({}, [] as any, {} as any)
+        service['_browser'] = browserProps as any
+        expect(service['_isMultiremote']()).toBe(expected)
+    })
+})
+
+test('after in multiremote with WebdriverIO v10 isMultiRemote', () => {
+    const service = new LambdaTestService({}, [] as any, {} as any)
+    service['_browser'] = { ...browser, isMultiremote: undefined, isMultiRemote: true }
+    service.beforeSession(
+        { user: process.env.LT_USERNAME, key: process.env.LT_ACCESS_KEY } as any,
+        { chromeA: {}, chromeB: {}, chromeC: {} } as any
+    )
+    service['_failures'] = 5
+    const updateSpy = vi.spyOn(service, '_update')
+
+    service.after(5)
+
+    expect(updateSpy).toBeCalledWith({
+            'browserName': 'chromeA',
+            'failures': 5,
+            'calledOnReload': false,
+            'sessionId': 'sessionChromeA',
+            })
+})
+
 test('onReload', () => {
     const service = new LambdaTestService({}, [] as any, {} as any)
     service['_browser'] = browser

@@ -352,7 +352,7 @@ export default class LambdaRestService {
 
     const status = "status: " + (result > 0 ? "failed" : "passed");
 
-    if (!this._browser.isMultiremote) {
+    if (!this._isMultiremote()) {
       log.info(
         `Update job with sessionId ${this._browser.sessionId}, ${status}`
       );
@@ -421,7 +421,7 @@ export default class LambdaRestService {
     const status =
       this._failures > 0 || this._retryFailures > 0 ? "failed" : "passed";
 
-    if (!this._browser.isMultiremote) {
+    if (!this._isMultiremote()) {
       log.info(
         `Update (reloaded) job with sessionId ${oldSessionId}, ${status}`
       );
@@ -557,8 +557,8 @@ export default class LambdaRestService {
     let body = {};
     if (
       !(
-        (!this._browser.isMultiremote && this._capabilities.name) ||
-        (this._browser.isMultiremote &&
+        (!this._isMultiremote() && this._capabilities.name) ||
+        (this._isMultiremote() &&
           this._capabilities[browserName].capabilities.name)
       )
     ) {
@@ -581,7 +581,7 @@ export default class LambdaRestService {
       if (calledOnReload || this._testCnt) {
         let testCnt = ++this._testCnt;
 
-        if (this._browser.isMultiremote) {
+        if (this._isMultiremote()) {
           testCnt = Math.ceil(testCnt / this._browser.instances.length);
         }
         if (!calledOnReload && !this._options.ignoreTestCountInName) {
@@ -657,11 +657,22 @@ export default class LambdaRestService {
     await this._executeCommand(`lambda-name=${sessionName}`);
   }
 
+  /**
+   * Checks if the browser is a multiremote instance
+   * WebdriverIO v10 renamed `isMultiremote` to `isMultiRemote`
+   * @returns {boolean} True if the browser is a multiremote instance
+   */
+  _isMultiremote() {
+    return Boolean(
+      this._browser?.isMultiremote || this._browser?.isMultiRemote
+    );
+  }
+
   async _executeCommand(cmd) {
     if (!this._browser) {
       return;
     }
-    if (this._browser.isMultiremote) {
+    if (this._isMultiremote()) {
       return Promise.all(
         Object.keys(this._capabilities).map(async (browserName) => {
           const browser = this._browser[browserName];
